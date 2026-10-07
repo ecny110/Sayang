@@ -2,6 +2,47 @@ const header = document.querySelector(".site-header");
 const menuToggle = document.querySelector(".menu-toggle");
 const navigation = document.querySelector(".site-nav");
 const cursorGlow = document.querySelector(".cursor-glow");
+const brandHeartButton = document.querySelector(".brand-heart-button");
+let heartCelebration;
+let heartCelebrationTimer;
+
+brandHeartButton.addEventListener("click", () => {
+  heartCelebration?.remove();
+  window.clearTimeout(heartCelebrationTimer);
+
+  const source = brandHeartButton.querySelector("svg");
+  const bounds = source.getBoundingClientRect();
+  const celebration = document.createElement("div");
+  celebration.className = "heart-celebration";
+  celebration.setAttribute("aria-hidden", "true");
+  celebration.style.setProperty("--heart-start-x", `${bounds.left + bounds.width / 2 - window.innerWidth / 2}px`);
+  celebration.style.setProperty("--heart-start-y", `${bounds.top + bounds.height / 2 - window.innerHeight / 2}px`);
+  celebration.style.setProperty("--heart-start-scale", String(bounds.width / Math.min(260, window.innerWidth * 0.65)));
+
+  const heart = source.cloneNode(true);
+  heart.classList.add("celebration-heart");
+  heart.querySelector("clipPath").id = "celebration-heart-clip";
+  heart.querySelector("image").setAttribute("clip-path", "url(#celebration-heart-clip)");
+  celebration.append(heart);
+
+  for (let index = 0; index < 14; index += 1) {
+    const sparkle = document.createElement("span");
+    const angle = (index / 14) * Math.PI * 2;
+    sparkle.className = "celebration-sparkle";
+    sparkle.textContent = "\u2665";
+    sparkle.style.setProperty("--spark-x", `${Math.cos(angle) * (100 + index % 3 * 25)}px`);
+    sparkle.style.setProperty("--spark-y", `${Math.sin(angle) * 150 - 35}px`);
+    sparkle.style.setProperty("--spark-delay", `${0.7 + index * 0.045}s`);
+    celebration.append(sparkle);
+  }
+
+  document.body.append(celebration);
+  heartCelebration = celebration;
+  heartCelebrationTimer = window.setTimeout(() => {
+    celebration.remove();
+    if (heartCelebration === celebration) heartCelebration = null;
+  }, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 1400 : 3600);
+});
 
 const closeMenu = () => {
   menuToggle.setAttribute("aria-expanded", "false");
