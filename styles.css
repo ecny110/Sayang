@@ -97,6 +97,9 @@ img {
 }
 
 .brand {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -113,6 +116,7 @@ img {
 }
 
 .brand-heart-button {
+  -webkit-touch-callout: none;
   appearance: none;
   -webkit-appearance: none;
   display: grid;
@@ -133,6 +137,8 @@ img {
   outline-offset: 4px;
   border-radius: 12px;
 }
+
+.brand-heart-button svg { pointer-events: none; }
 
 .heart-celebration {
   position: fixed;
@@ -190,7 +196,7 @@ img {
   filter: drop-shadow(0 4px 10px rgba(20, 14, 12, 0.28));
 }
 
-.brand-mark path:last-child {
+.brand-mark > path:last-child {
   fill: none;
   stroke: currentColor;
   stroke-width: 4;
@@ -978,6 +984,35 @@ h2 em {
   object-fit: contain;
 }
 
+.lightbox-viewport {
+  overflow: hidden;
+  touch-action: none;
+}
+
+.lightbox-viewport img {
+  transform-origin: center;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.lightbox-zoom-controls {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.lightbox-zoom-controls button {
+  min-width: 48px;
+  min-height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 24px;
+  background: rgba(20, 17, 14, 0.6);
+  color: white;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+
 .lightbox figcaption {
   margin: 15px 0 0;
   color: white;
@@ -1315,7 +1350,18 @@ h2 em {
 
   .lightbox {
     width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    overflow: hidden;
+    display: none;
   }
+
+  .lightbox[open] { display: grid; align-items: center; }
+
+  .lightbox img { height: 62dvh; max-height: 62dvh; }
+
+  .lightbox figcaption { font-size: 1rem; }
 
   .lightbox-content {
     padding: 0 14px;
@@ -1323,7 +1369,8 @@ h2 em {
 
   .lightbox-nav {
     top: auto;
-    bottom: -70px;
+    bottom: max(16px, env(safe-area-inset-bottom));
+    position: absolute;
     width: 48px;
     height: 48px;
     transform: none;
@@ -1342,8 +1389,11 @@ h2 em {
   }
 
   .lightbox-close {
-    top: -50px;
+    top: max(12px, env(safe-area-inset-top));
     right: 18px;
+    z-index: 3;
+    width: 44px;
+    height: 44px;
   }
 }
 

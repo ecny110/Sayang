@@ -6,7 +6,7 @@ const brandHeartButton = document.querySelector(".brand-heart-button");
 let heartCelebration;
 let heartCelebrationTimer;
 
-brandHeartButton.addEventListener("click", () => {
+const animateBrandHeart = () => {
   if (!window.matchMedia("(max-width: 980px), (pointer: coarse)").matches) {
     window.location.hash = "top";
     return;
@@ -73,6 +73,24 @@ brandHeartButton.addEventListener("click", () => {
     brandHeartButton.classList.remove("is-animating");
     if (heartCelebration === celebration) heartCelebration = null;
   }, reducedMotion ? 1400 : 3600);
+};
+
+let lastHeartTouch = 0;
+let heartTouchStart;
+brandHeartButton.addEventListener("touchstart", (event) => {
+  const touch = event.touches[0];
+  heartTouchStart = { x: touch.clientX, y: touch.clientY };
+}, { passive: true });
+brandHeartButton.addEventListener("touchend", (event) => {
+  const touch = event.changedTouches[0];
+  if (!heartTouchStart || Math.hypot(touch.clientX - heartTouchStart.x, touch.clientY - heartTouchStart.y) > 15) return;
+  event.preventDefault();
+  lastHeartTouch = Date.now();
+  animateBrandHeart();
+}, { passive: false });
+brandHeartButton.addEventListener("touchcancel", () => { heartTouchStart = null; });
+brandHeartButton.addEventListener("click", () => {
+  if (Date.now() - lastHeartTouch > 500) animateBrandHeart();
 });
 
 const closeMenu = () => {
@@ -192,9 +210,35 @@ const lightboxPrevious = lightbox.querySelector(".lightbox-prev");
 const lightboxNext = lightbox.querySelector(".lightbox-next");
 const galleryItems = [...document.querySelectorAll(".gallery-item")];
 let currentImage = 0;
-let swipeStartX = 0;
+const imageViewport = lightbox.querySelector(".lightbox-viewport");
+const zoomReset = lightbox.querySelector('[data-zoom="reset"]');
+let imageScale = 1;
+let imageX = 0;
+let imageY = 0;
+const imagePointers = new Map();
+let gesture;
+
+const updateImageZoom = () => {
+  const limitX = lightboxImage.clientWidth * (imageScale - 1) / 2;
+  const limitY = lightboxImage.clientHeight * (imageScale - 1) / 2;
+  imageX = Math.max(-limitX, Math.min(limitX, imageX));
+  imageY = Math.max(-limitY, Math.min(limitY, imageY));
+  lightboxImage.style.transform = `translate(${imageX}px, ${imageY}px) scale(${imageScale})`;
+  zoomReset.textContent = `${Math.round(imageScale * 100)}%`;
+};
+const setImageScale = (scale) => {
+  imageScale = Math.max(1, Math.min(4, scale));
+  updateImageZoom();
+};
+const resetImageZoom = () => {
+  imageX = imageY = 0;
+  imagePointers.clear();
+  gesture = null;
+  setImageScale(1);
+};
 
 const showLightboxImage = (index) => {
+  resetImageZoom();
   currentImage = (index + galleryItems.length) % galleryItems.length;
   const item = galleryItems[currentImage];
   lightboxImage.src = item.dataset.full;
@@ -216,19 +260,54 @@ lightboxClose.addEventListener("click", () => lightbox.close());
 lightboxPrevious.addEventListener("click", showPreviousImage);
 lightboxNext.addEventListener("click", showNextImage);
 
-lightboxImage.addEventListener("pointerdown", (event) => {
-  swipeStartX = event.clientX;
-});
+lightbox.querySelector('[data-zoom="in"]').addEventListener("click", () => setImageScale(imageScale + 0.5));
+lightbox.querySelector('[data-zoom="out"]').addEventListener("click", () => setImageScale(imageScale - 0.5));
+zoomReset.addEventListener("click", resetImageZoom);
+lightbox.addEventListener("close", resetImageZoom);
+lightboxImage.addEventListener("dblclick", () => setImageScale(imageScale > 1 ? 1 : 2));
 
-lightboxImage.addEventListener("pointerup", (event) => {
-  const swipeDistance = event.clientX - swipeStartX;
-  if (Math.abs(swipeDistance) < 50) return;
-  if (swipeDistance > 0) {
-    showPreviousImage();
-  } else {
-    showNextImage();
+imageViewport.addEventListener("pointerdown", (event) => {
+  if (event.pointerType === "mouse" && event.button !== 0) return;
+  imageViewport.setPointerCapture(event.pointerId);
+  imagePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+  const points = [...imagePointers.values()];
+  if (points.length === 1) {
+    gesture = { x: event.clientX, y: event.clientY, imageX, imageY, scale: imageScale, pinched: false };
+  } else if (points.length === 2) {
+    gesture = { distance: Math.hypot(points[1].x - points[0].x, points[1].y - points[0].y), scale: imageScale, pinched: true };
   }
 });
+imageViewport.addEventListener("pointermove", (event) => {
+  if (!imagePointers.has(event.pointerId) || !gesture) return;
+  imagePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+  const points = [...imagePointers.values()];
+  if (points.length === 2 && gesture.distance > 0) {
+    setImageScale(gesture.scale * Math.hypot(points[1].x - points[0].x, points[1].y - points[0].y) / gesture.distance);
+  } else if (points.length === 1 && !gesture.pinched && imageScale > 1) {
+    imageX = gesture.imageX + event.clientX - gesture.x;
+    imageY = gesture.imageY + event.clientY - gesture.y;
+    updateImageZoom();
+  }
+});
+const finishImageGesture = (event) => {
+  if (!imagePointers.has(event.pointerId)) return;
+  imagePointers.delete(event.pointerId);
+  if (event.type === "pointerup" && gesture && !gesture.pinched && gesture.scale === 1 && imagePointers.size === 0) {
+    const dx = event.clientX - gesture.x;
+    const dy = event.clientY - gesture.y;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx > 0) showPreviousImage(); else showNextImage();
+    }
+  }
+  if (imagePointers.size === 0) gesture = null;
+};
+
+lightboxImage.addEventListener("load", updateImageZoom);
+window.addEventListener("resize", () => {
+  if (lightbox.open) updateImageZoom();
+});
+imageViewport.addEventListener("pointerup", finishImageGesture);
+imageViewport.addEventListener("pointercancel", finishImageGesture);
 
 lightbox.addEventListener("click", (event) => {
   if (event.target === lightbox) lightbox.close();
