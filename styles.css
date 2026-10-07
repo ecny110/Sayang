@@ -113,6 +113,8 @@ img {
 }
 
 .brand-heart-button {
+  appearance: none;
+  -webkit-appearance: none;
   display: grid;
   place-items: center;
   min-width: 48px;
@@ -120,6 +122,7 @@ img {
   padding: 0;
   border: 0;
   background: transparent;
+  box-shadow: none;
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
@@ -139,8 +142,7 @@ img {
   place-items: center;
   pointer-events: none;
   color: #ffd4de;
-  background: radial-gradient(ellipse at center, rgba(113, 53, 54, 0.55), rgba(113, 53, 54, 0.08));
-  animation: celebrationVeil 3.6s ease both;
+  background: transparent;
 }
 
 .celebration-heart {
@@ -149,7 +151,6 @@ img {
   height: auto;
   overflow: visible;
   filter: drop-shadow(0 0 22px rgba(255, 160, 185, 0.8));
-  animation: romanticHeart 3.6s ease-in-out both;
 }
 
 .celebration-heart > path {
@@ -167,18 +168,7 @@ img {
   animation: romanticSparkle 2s ease-out var(--spark-delay) both;
 }
 
-@keyframes celebrationVeil {
-  0%, 100% { opacity: 0; }
-  18%, 78% { opacity: 1; }
-}
-
-@keyframes romanticHeart {
-  0% { transform: translate(var(--heart-start-x), var(--heart-start-y)) scale(var(--heart-start-scale)); }
-  25% { transform: scale(1); }
-  34%, 54% { transform: scale(1.1) rotate(-3deg); }
-  43%, 64%, 78% { transform: scale(1); }
-  100% { transform: translate(var(--heart-start-x), var(--heart-start-y)) scale(var(--heart-start-scale)); }
-}
+.brand-heart-button.is-animating .brand-mark { opacity: 0; }
 
 @keyframes romanticSparkle {
   0% { opacity: 0; transform: scale(0.3); }

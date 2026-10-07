@@ -7,6 +7,10 @@ let heartCelebration;
 let heartCelebrationTimer;
 
 brandHeartButton.addEventListener("click", () => {
+  if (!window.matchMedia("(max-width: 980px), (pointer: coarse)").matches) {
+    window.location.hash = "top";
+    return;
+  }
   heartCelebration?.remove();
   window.clearTimeout(heartCelebrationTimer);
 
@@ -15,12 +19,13 @@ brandHeartButton.addEventListener("click", () => {
   const celebration = document.createElement("div");
   celebration.className = "heart-celebration";
   celebration.setAttribute("aria-hidden", "true");
-  celebration.style.setProperty("--heart-start-x", `${bounds.left + bounds.width / 2 - window.innerWidth / 2}px`);
-  celebration.style.setProperty("--heart-start-y", `${bounds.top + bounds.height / 2 - window.innerHeight / 2}px`);
-  celebration.style.setProperty("--heart-start-scale", String(bounds.width / Math.min(260, window.innerWidth * 0.65)));
+  const startX = bounds.left + bounds.width / 2 - window.innerWidth / 2;
+  const startY = bounds.top + bounds.height / 2 - window.innerHeight / 2;
+  const startScale = bounds.width / Math.min(260, window.innerWidth * 0.65);
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const heart = source.cloneNode(true);
-  heart.classList.add("celebration-heart");
+  heart.setAttribute("class", "celebration-heart");
   heart.querySelector("clipPath").id = "celebration-heart-clip";
   heart.querySelector("image").setAttribute("clip-path", "url(#celebration-heart-clip)");
   celebration.append(heart);
@@ -38,10 +43,36 @@ brandHeartButton.addEventListener("click", () => {
 
   document.body.append(celebration);
   heartCelebration = celebration;
+  if (!reducedMotion) {
+    brandHeartButton.classList.add("is-animating");
+    const frames = [];
+    const spiralFrame = (progress) => {
+      const eased = progress * progress * (3 - 2 * progress);
+      const angle = progress * Math.PI * 2;
+      const radius = Math.sin(progress * Math.PI) * Math.min(55, window.innerWidth * 0.12);
+      const x = startX * (1 - eased) + Math.sin(angle) * radius;
+      const y = startY * (1 - eased) + Math.cos(angle) * radius;
+      return `translate(${x}px, ${y}px) scale(${startScale + (1 - startScale) * eased}) rotate(${360 * eased}deg)`;
+    };
+    for (let step = 0; step <= 40; step += 1) {
+      frames.push({ offset: step / 40 * 0.35, transform: spiralFrame(step / 40) });
+    }
+    frames.push(
+      { offset: 0.43, transform: "scale(1.08) rotate(360deg)" },
+      { offset: 0.5, transform: "scale(1) rotate(360deg)" },
+      { offset: 0.57, transform: "scale(1.06) rotate(360deg)" },
+      { offset: 0.65, transform: "scale(1) rotate(360deg)" }
+    );
+    for (let step = 1; step <= 40; step += 1) {
+      frames.push({ offset: 0.65 + step / 40 * 0.35, transform: spiralFrame(1 - step / 40) });
+    }
+    heart.animate(frames, { duration: 3600, fill: "both" });
+  }
   heartCelebrationTimer = window.setTimeout(() => {
     celebration.remove();
+    brandHeartButton.classList.remove("is-animating");
     if (heartCelebration === celebration) heartCelebration = null;
-  }, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 1400 : 3600);
+  }, reducedMotion ? 1400 : 3600);
 });
 
 const closeMenu = () => {
