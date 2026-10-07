@@ -995,24 +995,6 @@ h2 em {
   user-select: none;
 }
 
-.lightbox-zoom-controls {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 12px;
-}
-
-.lightbox-zoom-controls button {
-  min-width: 48px;
-  min-height: 44px;
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  border-radius: 24px;
-  background: rgba(20, 17, 14, 0.6);
-  color: white;
-  touch-action: manipulation;
-  cursor: pointer;
-}
-
 .lightbox figcaption {
   margin: 15px 0 0;
   color: white;

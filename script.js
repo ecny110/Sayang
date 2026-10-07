@@ -211,7 +211,6 @@ const lightboxNext = lightbox.querySelector(".lightbox-next");
 const galleryItems = [...document.querySelectorAll(".gallery-item")];
 let currentImage = 0;
 const imageViewport = lightbox.querySelector(".lightbox-viewport");
-const zoomReset = lightbox.querySelector('[data-zoom="reset"]');
 let imageScale = 1;
 let imageX = 0;
 let imageY = 0;
@@ -224,7 +223,6 @@ const updateImageZoom = () => {
   imageX = Math.max(-limitX, Math.min(limitX, imageX));
   imageY = Math.max(-limitY, Math.min(limitY, imageY));
   lightboxImage.style.transform = `translate(${imageX}px, ${imageY}px) scale(${imageScale})`;
-  zoomReset.textContent = `${Math.round(imageScale * 100)}%`;
 };
 const setImageScale = (scale) => {
   imageScale = Math.max(1, Math.min(4, scale));
@@ -260,9 +258,6 @@ lightboxClose.addEventListener("click", () => lightbox.close());
 lightboxPrevious.addEventListener("click", showPreviousImage);
 lightboxNext.addEventListener("click", showNextImage);
 
-lightbox.querySelector('[data-zoom="in"]').addEventListener("click", () => setImageScale(imageScale + 0.5));
-lightbox.querySelector('[data-zoom="out"]').addEventListener("click", () => setImageScale(imageScale - 0.5));
-zoomReset.addEventListener("click", resetImageZoom);
 lightbox.addEventListener("close", resetImageZoom);
 lightboxImage.addEventListener("dblclick", () => setImageScale(imageScale > 1 ? 1 : 2));
 
